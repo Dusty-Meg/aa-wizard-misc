@@ -1,7 +1,7 @@
 include LICENSE
 include README.md
 include MANIFEST.in
-graft example
+graft aa-wizard-misc
 
 global-exclude __pycache__
 global-exclude *.py[co]

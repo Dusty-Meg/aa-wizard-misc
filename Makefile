@@ -1,5 +1,5 @@
-appname = example
-package = example
+appname = aa-wizard-misc
+package = aa-wizard-misc
 
 help:
 	@echo "Makefile for $(appname)"
