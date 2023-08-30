@@ -1,16 +1,21 @@
 """App Tasks"""
 
 # Standard Library
+import json
 import logging
 
 # Third Party
 import requests
 from celery import shared_task
 
+# Django
+from django.conf import settings
+
 # Alliance Auth
+from allianceauth.authentication.models import UserProfile
 from allianceauth.eveonline.models import EveCharacter
 
-from .app_settings import JABBERBOT_URL
+from .app_settings import HR_FORUM_WEBHOOK, JABBERBOT_URL
 from .models import Settings
 
 logger = logging.getLogger(__name__)
@@ -18,21 +23,23 @@ logger = logging.getLogger(__name__)
 # Create your tasks here
 
 
-# Example Task
+def send_discord_message(body_dict, webhook):
+    header = {"Content-Type": "application/json"}
+
+    requests.post(url=webhook, data=json.dumps(body_dict), headers=header)
+
+
 @shared_task
 def blacklist_check():
-    logger.debug("Checking s:")
+    settings_key = "BlacklistLastId"
     last_id, created = Settings.objects.get_or_create(
-        setting_id="BlacklistLastId",
-        defaults={"setting_id": "BlacklistLastId", "value": "0"},
+        setting_id=settings_key,
+        defaults={"setting_id": settings_key, "value": "0"},
     )
 
-    if created:
-        last_id = 0
-    else:
-        last_id = int(last_id.value)
+    last_id_id = int(last_id.value)
 
-    for character in EveCharacter.objects.filter(id__gt=last_id):
+    for character in EveCharacter.objects.filter(id__gt=last_id_id):
         try:
             logger.debug(f"Checking character: {character.character_name}")
             requests.get(f"{JABBERBOT_URL}/blacklist/{character.character_name}")
@@ -40,4 +47,38 @@ def blacklist_check():
         except Exception as error:
             logging.error(f"Error connecting to Jabber! {error}")
 
-    Settings.objects.update_or_create(setting_id="BlacklistLastId", value=last_id)
+    last_id.value = last_id_id
+
+    last_id.save()
+
+
+@shared_task
+def new_account_discord_ping():
+    settings_key = "NewAccountDiscordPingLastId"
+    last_id, created = Settings.objects.get_or_create(
+        setting_id=settings_key,
+        defaults={"setting_id": settings_key, "value": "1"},
+    )
+
+    last_id_id = int(last_id.value)
+
+    for aa_user in UserProfile.objects.filter(id__gt=last_id_id):
+        try:
+            logger.debug(
+                f"Creating Discord thread for new user: {aa_user.user.username}"
+            )
+
+            thread_body = {
+                "thread_name": aa_user.user.username,
+                "content": f"AA Link: {settings.SITE_URL}/audit/r/{aa_user.main_character.character_id}/account/status",
+            }
+
+            send_discord_message(thread_body, HR_FORUM_WEBHOOK)
+
+            last_id_id = aa_user.id
+        except Exception as error:
+            logging.error(f"Error connecting to discord! {error}")
+
+    last_id.value = last_id_id
+
+    last_id.save()
