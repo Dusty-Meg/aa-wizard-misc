@@ -75,6 +75,10 @@ class TestExample(TestCase):
     def test_can_call_blacklist(self, mock_get):
         local_tasks.blacklist_check()
 
+        self.assertNotIn(
+            mock.call("http://192.168.234.233:5000/blacklist/Alt 1"),
+            mock_get.call_args_list,
+        )
         self.assertIn(
             mock.call("http://192.168.234.233:5000/blacklist/Alt 2"),
             mock_get.call_args_list,
