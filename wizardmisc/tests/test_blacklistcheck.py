@@ -43,7 +43,7 @@ class TestExample(TestCase):
         EveCharacter.objects.all().delete()
         local_models.Settings.objects.all().delete()
 
-        local_models.Settings.objects.create(setting_id="BlacklistLastId", value=1)
+        local_models.Settings.objects.create(setting_id="BlacklistLastId", value="1")
 
         EveCharacter.objects.create(
             character_name="Alt 1",
