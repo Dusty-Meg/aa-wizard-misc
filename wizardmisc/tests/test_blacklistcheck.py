@@ -89,5 +89,5 @@ class TestExample(TestCase):
         )
 
         self.assertEqual(
-            3, local_models.Settings.objects.get(setting_id="BlacklistLastId").value
+            "3", local_models.Settings.objects.get(setting_id="BlacklistLastId").value
         )
