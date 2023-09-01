@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = example
+source = wizardmisc
 
 [report]
 exclude_lines =
