@@ -1,13 +1,13 @@
-name: Release to PyPI
+name: Release to GitHub
 
 on:
-  #release:
+  release:
     # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#release
-    #types: [released, prereleased]
+    types: [released, prereleased]
 
 jobs:
   release:
-    name: Release on Pypi
+    name: Release on GitHub
     runs-on: ubuntu-latest
 
     steps:
@@ -25,11 +25,10 @@ jobs:
           python -m pip install --upgrade build
           python -m pip install --upgrade setuptools wheel twine
 
-      - name: Package and Upload
-        env:
-          STACKMANAGER_VERSION: ${{ github.event.release.tag_name }}
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_APIKEY }}
-        run: |
-          python -m build
-          python -m twine upload dist/*
+      - name: Build package
+        run: python -m build
+
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
