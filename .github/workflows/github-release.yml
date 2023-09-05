@@ -5,10 +5,16 @@ on:
     # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#release
     types: [released, prereleased]
 
+permissions:
+  contents: read
+
 jobs:
   release:
     name: Release on GitHub
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
 
     steps:
       - name: Checkout
