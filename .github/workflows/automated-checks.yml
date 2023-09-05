@@ -49,8 +49,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
 
+      - name: Apt update
+        run: sudo apt-get update
+
       - name: Install redis
         run: sudo apt-get install -y redis-tools redis-server
+
+      - name: Start Redis
+        run: sudo redis-server --daemonize yes
 
       - name: Verify that redis is up
         run: redis-cli ping
@@ -71,6 +77,7 @@ jobs:
 
       - name: Upload Coverage Artifacts
         uses: actions/upload-artifact@v3
+        if: ${{ !github.event.act }}
         with:
           name: coverage-python-${{ matrix.python-version }}
           path: coverage.xml

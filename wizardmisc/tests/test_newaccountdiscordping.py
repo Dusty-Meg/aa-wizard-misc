@@ -6,10 +6,13 @@ New Account Discord Ping test
 from unittest import mock
 
 # Django
+from django.contrib.auth.models import User
 from django.test import RequestFactory, TestCase
 
 # Alliance Auth
-from allianceauth.authentication.models import UserProfile
+from allianceauth.authentication.models import CharacterOwnership, UserProfile
+from allianceauth.eveonline.models import EveCharacter
+from allianceauth.tests.auth_utils import AuthUtils
 
 from .. import models as local_models
 from .. import tasks as local_tasks
@@ -25,7 +28,7 @@ def mocked_requests_post(*args, **kwargs):
             return self.json_data
 
     if (
-        args[0]
+        kwargs["url"]
         == "https://discord.com/api/webhooks/44/HCdVva_OSpjEffffgYUnV6QgggLsAt-tTBSLPl3U4335rM3Rd9"
     ):
         return MockResponse({}, 200)
@@ -42,23 +45,34 @@ class TestExample(TestCase):
     def setUpClass(cls):
         cls.factory = RequestFactory()
         UserProfile.objects.all().delete()
+        EveCharacter.objects.all().delete()
+        User.objects.all().delete()
         local_models.Settings.objects.all().delete()
+
+        userids = range(1, 4)
 
         local_models.Settings.objects.create(
             setting_id="NewAccountDiscordPingLastId", value="1"
         )
 
-        UserProfile.objects.create(
-            main_character_id=None, state_id=1, user_id=1, language="", night_mode=None
-        )
+        users = []
+        characters = []
+        for uid in userids:
+            user = AuthUtils.create_user(f"User_{uid}")
+            main_char = AuthUtils.add_main_character_2(
+                user,
+                f"Main {uid}",
+                uid,
+                corp_id=1,
+                corp_name="Test Corp 1",
+                corp_ticker="TST1",
+            )
+            CharacterOwnership.objects.create(
+                user=user, character=main_char, owner_hash=f"main{uid}"
+            )
 
-        UserProfile.objects.create(
-            main_character_id=22, state_id=1, user_id=2, language="", night_mode=None
-        )
-
-        UserProfile.objects.create(
-            main_character_id=33, state_id=1, user_id=3, language="", night_mode=None
-        )
+            characters.append(main_char)
+            users.append(user)
 
         super().setUpClass()
 
@@ -68,7 +82,9 @@ class TestExample(TestCase):
 
         self.assertIn(
             mock.call(
-                "https://discord.com/api/webhooks/44/HCdVva_OSpjEffffgYUnV6QgggLsAt-tTBSLPl3U4335rM3Rd9"
+                url="https://discord.com/api/webhooks/44/HCdVva_OSpjEffffgYUnV6QgggLsAt-tTBSLPl3U4335rM3Rd9",
+                data='{"thread_name": "User_2", "content": "AA Link: https://example.com/audit/r/2/account/status"}',
+                headers={"Content-Type": "application/json"},
             ),
             mock_post.call_args_list,
         )
