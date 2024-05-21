@@ -3,6 +3,7 @@
 # Standard Library
 import json
 import logging
+from http.client import RemoteDisconnected
 
 # Third Party
 import requests
@@ -43,6 +44,8 @@ def blacklist_check():
         try:
             logger.debug(f"Checking character: {character.character_name}")
             requests.get(f"{JABBERBOT_URL}/blacklist/{character.character_name}/")
+            last_id_id = character.id
+        except RemoteDisconnected:
             last_id_id = character.id
         except Exception as error:
             logging.error(f"Error connecting to Jabber! {error}")
