@@ -3,7 +3,6 @@
 # Standard Library
 import json
 import logging
-from http.client import RemoteDisconnected
 
 # Third Party
 import requests
