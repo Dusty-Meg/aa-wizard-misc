@@ -52,12 +52,13 @@ def blacklist_check():
             logger.debug(f"Checking character: {character.character_name}")
             requests.get(f"{JABBERBOT_URL}/blacklist/{character.character_name}/")
             last_id_id = character.id
-        except RemoteDisconnected:
-            last_id_id = character.id
         except Exception as error:
-            logging.error(
-                f"Error connecting to Jabber! {error} : {type(error).__name__} : {get_full_class_name(error)}"
-            )
+            if "Connection aborted" in str(error):
+                last_id_id = character.id
+            else:
+                logging.error(
+                    f"Error connecting to Jabber! {error} : {type(error).__name__} : {get_full_class_name(error)}"
+                )
 
     last_id.value = last_id_id
 
