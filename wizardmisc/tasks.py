@@ -48,7 +48,7 @@ def blacklist_check():
         except RemoteDisconnected:
             last_id_id = character.id
         except Exception as error:
-            logging.error(f"Error connecting to Jabber! {error}")
+            logging.error(f"Error connecting to Jabber! {error} : {type(error).__name__}")
 
     last_id.value = last_id_id
 

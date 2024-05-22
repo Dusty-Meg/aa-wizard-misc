@@ -24,9 +24,9 @@ def mocked_requests_get(*args, **kwargs):
         def json(self):
             return self.json_data
 
-    if args[0] == "http://192.168.234.233:5000/blacklist/Alt 1":
+    if args[0] == "http://192.168.234.233:5000/blacklist/Alt 1/":
         return MockResponse({}, 200)
-    elif args[0] == "http://192.168.234.233:5000/blacklist/Alt 2":
+    elif args[0] == "http://192.168.234.233:5000/blacklist/Alt 2/":
         return MockResponse({}, 200)
 
     return MockResponse(None, 404)
