@@ -119,3 +119,6 @@ DEFAULT_FROM_EMAIL = ""
 #######################################
 # Add any custom settings below here. #
 #######################################
+
+JABBERBOT_URL = "http://192.168.234.233:5000"
+HR_FORUM_WEBHOOK = "https://discord.com/api/webhooks/44/HCdVva_OSpjEffffgYUnV6QgggLsAt-tTBSLPl3U4335rM3Rd9"
