@@ -24,8 +24,14 @@ class Migration(migrations.Migration):
                 ),
                 ("SystemName", models.TextField()),
                 ("BeltType", models.TextField()),
-                ("RespawnTime", models.DateTimeField(blank=False, default=None, null=False)),
-                ("ReportedTime", models.DateTimeField(blank=False, default=None, null=False)),
+                (
+                    "RespawnTime",
+                    models.DateTimeField(blank=False, default=None, null=False),
+                ),
+                (
+                    "ReportedTime",
+                    models.DateTimeField(blank=False, default=None, null=False),
+                ),
             ],
         ),
     ]
