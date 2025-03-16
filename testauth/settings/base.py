@@ -102,19 +102,19 @@ ROOT_URLCONF = "allianceauth.urls"
 LOCALE_PATHS = (os.path.join(BASE_DIR, "locale/"),)
 
 LANGUAGES = (  # Sorted by Language Code alphabetical order + English at top
-    ("en", _("English")),
-    # ("cs-cz", _("Czech")), #Not yet at 50% translated
-    ("de", _("German")),
-    ("es", _("Spanish")),
-    ("it-it", _("Italian")),
-    ("ja", _("Japanese")),
-    ("ko-kr", _("Korean")),
-    ("fr-fr", _("French")),
-    ("nl-nl", _("Dutch")),
-    ("pl-pl", _("Polish")),
-    ("ru", _("Russian")),
-    ("uk", _("Ukrainian")),
-    ("zh-hans", _("Simplified Chinese")),
+    ("en", ("English")),
+    # ("cs-cz", ("Czech")), #Not yet at 50% translated
+    ("de", ("German")),
+    ("es", ("Spanish")),
+    ("it-it", ("Italian")),
+    ("ja", ("Japanese")),
+    ("ko-kr", ("Korean")),
+    ("fr-fr", ("French")),
+    ("nl-nl", ("Dutch")),
+    ("pl-pl", ("Polish")),
+    ("ru", ("Russian")),
+    ("uk", ("Ukrainian")),
+    ("zh-hans", ("Simplified Chinese")),
 )
 
 # Django's language codes are different from some of the libraries we use,
