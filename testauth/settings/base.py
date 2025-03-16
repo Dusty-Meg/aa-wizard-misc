@@ -45,8 +45,6 @@ INSTALLED_APPS = [
     "allianceauth.custom_css",
     "allianceauth.crontab",
     "sri",
-    "eveuniverse",
-    "corptools",
 ]
 
 SRI_ALGORITHM = "sha512"
