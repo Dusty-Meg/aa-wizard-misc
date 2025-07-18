@@ -14,7 +14,10 @@ from django.conf import settings
 
 # Alliance Auth
 from allianceauth.authentication.models import UserProfile
-from allianceauth.eveonline.models import EveCharacter
+from allianceauth.eveonline.models import EveCharacter, EveCorporationInfo
+
+from app_utils.datetime import ldap_timedelta_2_timedelta
+
 
 from structures.models import Notification as StructuresNotification
 from structures.models import Structure as StructuresStructure
@@ -112,10 +115,9 @@ def structures_notification_unanchoring():
     last_id_id = int(last_id.value)
 
     for notification in StructuresNotification.objects.filter(
-        id__gt=last_id_id, notif_type="StructureUnanchoring"
-    ):
+        id__gt=last_id_id, notif_type='StructureUnanchoring'):
 
-        parsed_text = notificaion.parsed_text()
+        parsed_text = notification.parsed_text()
 
         if not parsed_text:
             continue
@@ -126,39 +128,58 @@ def structures_notification_unanchoring():
             solar_system_id = parsed_text["solarsystemID"]
         if "structureTypeID" in parsed_text:
             structure_type_id = parsed_text["structureTypeID"]
+        if "structureID" in parsed_text:
+            structure_id = parsed_text["structureID"]
         if "timeLeft" in parsed_text:
             time_left = parsed_text["timeLeft"]
         if "ownerCorpLinkData" in parsed_text:
             owner_corp_link_data = parsed_text["ownerCorpLinkData"][2]
 
         structure = StructuresStructure.objects.filter(
-            structure_id=notification.structure_id
+            id=structure_id
         ).first()
 
+        structure_name = structure.name if structure else "Unknown Structure"
 
-        timer = StructureTimersTimer.objects.create(
-            timer_type="Unanchoring",
-            location_details="",
-            structure_name=structure.name if structure else "Unknown Structure",
-            objective="FR",
-            date=time_left,
-            is_important=False,
-            owner_name=owner_corp_name,
-            is_opsec=False,
-            visibility="UN",
-            details_notes=f"Automatically created from Structures Notification for {notification.structure_name} at {datetime.datetime.now(timezone.utc).isoformat()}",
-            eve_alliance_id=1,
-            eve_corporation_id=370,
-            eve_solar_system_id=solar_system_id,
-            structure_type_id=structure_type_id,
-            last_updated_at=datetime.datetime.now(timezone.utc).isoformat(),
-        )
+        corp = EveCorporationInfo.objects.filter(
+            corporation_id=owner_corp_link_data).first()            
+        
+
+        eve_time = notification.timestamp + ldap_timedelta_2_timedelta(time_left)
+
+        timer = StructureTimersTimer.objects.filter(
+            eve_solar_system_id=solar_system_id, structure_name=structure_name, timer_type="UA").first()
+        
+        if timer:
+            timer.date = eve_time
+            timer.owner_name = owner_corp_name
+            timer.details_notes = f"Updated from Structures Notification for {owner_corp_name} at {datetime.datetime.now(datetime.timezone.utc).isoformat()}"
+            timer.eve_alliance_id = corp.alliance_id if corp else None
+            timer.eve_corporation_id = corp.corporation_id if corp else None
+            timer.eve_solar_system_id = solar_system_id
+            timer.structure_type_id = structure_type_id
+            timer.last_updated_at = str(datetime.datetime.now(datetime.timezone.utc).isoformat())
+            timer.save()
+        else:
+            timer = StructureTimersTimer.objects.create(
+                timer_type="UA",
+                location_details="",
+                structure_name=structure.name if structure else "Unknown Structure",
+                objective="FR",
+                date=eve_time,
+                is_important=False,
+                owner_name=owner_corp_name,
+                is_opsec=False,
+                visibility="UN",
+                details_notes=f"Automatically created from Structures Notification for {owner_corp_name} at {datetime.datetime.now(datetime.timezone.utc).isoformat()}",
+                eve_alliance_id=corp.alliance_id if corp else None,
+                eve_corporation_id=corp.corporation_id if corp else None,
+                eve_solar_system_id=solar_system_id,
+                structure_type_id=structure_type_id,
+                last_updated_at=str(datetime.datetime.now(datetime.timezone.utc).isoformat()),
+            )
 
         last_id_id = notification.id
 
     last_id.value = last_id_id
     last_id.save()
-
-
-            
-
