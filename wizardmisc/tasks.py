@@ -156,8 +156,6 @@ def structures_notification_unanchoring():
             timer.details_notes = f"Updated from Structures Notification for {owner_corp_name} at {datetime.datetime.now(datetime.timezone.utc).isoformat()}"
             timer.eve_alliance_id = corp.alliance_id if corp else None
             timer.eve_corporation_id = corp.corporation_id if corp else None
-            timer.eve_solar_system_id = solar_system_id
-            timer.structure_type_id = structure_type_id
             timer.last_updated_at = str(datetime.datetime.now(datetime.timezone.utc).isoformat())
             timer.save()
         else:
