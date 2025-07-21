@@ -14,7 +14,10 @@ from django.conf import settings
 
 # Alliance Auth
 from allianceauth.authentication.models import UserProfile
-from allianceauth.eveonline.models import EveCharacter, EveCorporationInfo
+from allianceauth.eveonline.models import EveCharacter, EveCorporationInfo, EveAllianceInfo
+
+from eveuniverse.models.universe_1 import EveType
+from eveuniverse.models.universe_2 import EveSolarSystem
 
 from app_utils.datetime import ldap_timedelta_2_timedelta
 
@@ -142,13 +145,24 @@ def structures_notification_unanchoring():
         structure_name = structure.name if structure else "Unknown Structure"
 
         corp = EveCorporationInfo.objects.filter(
-            corporation_id=owner_corp_link_data).first()            
+            corporation_id=owner_corp_link_data).first()
+
+        alliance = None
+        if corp.alliance_id is not None:
+            alliance = EveAllianceInfo.objects.filter(
+                alliance_id=corp.alliance_id).first()
         
 
         eve_time = notification.timestamp + ldap_timedelta_2_timedelta(time_left)
 
         timer = StructureTimersTimer.objects.filter(
             eve_solar_system_id=solar_system_id, structure_name=structure_name, timer_type="UA").first()
+
+        solar_system = EveSolarSystem.objects.filter(
+            id=solar_system_id).first()
+
+        structure_type = EveType.objects.filter(
+            id=structure_type_id).first()
         
         if timer:
             timer.date = eve_time
@@ -170,10 +184,10 @@ def structures_notification_unanchoring():
                 is_opsec=False,
                 visibility="UN",
                 details_notes=f"Automatically created from Structures Notification for {owner_corp_name} at {datetime.datetime.now(datetime.timezone.utc).isoformat()}",
-                eve_alliance_id=corp.id if corp else None,
-                eve_corporation_id=corp.id if corp else None,
-                eve_solar_system_id=solar_system_id,
-                structure_type_id=structure_type_id,
+                eve_alliance_id=alliance,
+                eve_corporation_id=corp,
+                eve_solar_system_id=solar_system,
+                structure_type_id=structure_type,
                 last_updated_at=str(datetime.datetime.now(datetime.timezone.utc).isoformat()),
             )
 
