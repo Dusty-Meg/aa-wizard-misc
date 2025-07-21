@@ -184,10 +184,10 @@ def structures_notification_unanchoring():
                 is_opsec=False,
                 visibility="UN",
                 details_notes=f"Automatically created from Structures Notification for {owner_corp_name} at {datetime.datetime.now(datetime.timezone.utc).isoformat()}",
-                eve_alliance_id=alliance,
-                eve_corporation_id=corp,
-                eve_solar_system_id=solar_system,
-                structure_type_id=structure_type,
+                eve_alliance_id=alliance.if if alliance is not None else None,
+                eve_corporation_id=corp.id,
+                eve_solar_system_id=solar_system_id,
+                structure_type_id=structure_type_id,
                 last_updated_at=str(datetime.datetime.now(datetime.timezone.utc).isoformat()),
             )
 
