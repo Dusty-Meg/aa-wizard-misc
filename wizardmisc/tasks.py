@@ -151,7 +151,7 @@ def structures_notification_unanchoring():
         alliance = None
         if corp.alliance_id is not None:
             alliance = EveAllianceInfo.objects.filter(
-                alliance_id=corp.alliance_id).first()
+                id=corp.alliance_id).first()
         
 
         eve_time = notification.timestamp + ldap_timedelta_2_timedelta(time_left)
