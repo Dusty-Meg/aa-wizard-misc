@@ -173,7 +173,7 @@ def structures_notification_unanchoring():
             timer.eve_corporation = corp
             timer.last_updated_at = str(datetime.datetime.now(datetime.timezone.utc).isoformat())
             timer.save()
-            StructureTimersSchedule.delay(timer.id)
+            StructureTimersSchedule.delay(timer_pk=timer.id, is_new=False)
         else:
             timer = StructureTimersTimer.objects.create(
                 timer_type="UA",
@@ -193,7 +193,7 @@ def structures_notification_unanchoring():
                 last_updated_at=str(datetime.datetime.now(datetime.timezone.utc).isoformat()),
             )
             timer.save()
-            StructureTimersSchedule.delay(timer.id)
+            StructureTimersSchedule.delay(timer_pk=timer.id, is_new=True)
 
         last_id_id = notification.id
 
