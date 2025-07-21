@@ -25,7 +25,6 @@ from app_utils.datetime import ldap_timedelta_2_timedelta
 from structures.models import Notification as StructuresNotification
 from structures.models import Structure as StructuresStructure
 from structuretimers.models import Timer as StructureTimersTimer
-from structuretimers.tasks import schedule_notifications_for_timer as StructureTimersSchedule
 
 from .app_settings import HR_FORUM_WEBHOOK, JABBERBOT_URL
 from .models import Settings
@@ -173,7 +172,6 @@ def structures_notification_unanchoring():
             timer.eve_corporation = corp
             timer.last_updated_at = str(datetime.datetime.now(datetime.timezone.utc).isoformat())
             timer.save()
-            StructureTimersSchedule.delay(timer_pk=timer.id, is_new=False)
         else:
             timer = StructureTimersTimer.objects.create(
                 timer_type="UA",
@@ -193,7 +191,6 @@ def structures_notification_unanchoring():
                 last_updated_at=str(datetime.datetime.now(datetime.timezone.utc).isoformat()),
             )
             timer.save()
-            StructureTimersSchedule.delay(timer_pk=timer.id, is_new=True)
 
         last_id_id = notification.id
 
