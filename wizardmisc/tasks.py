@@ -8,13 +8,18 @@ import datetime
 # Third Party
 import requests
 from celery import shared_task
+import dhooks_lite
 
 # Django
 from django.conf import settings
 
 # Alliance Auth
 from allianceauth.authentication.models import UserProfile
-from allianceauth.eveonline.models import EveCharacter, EveCorporationInfo, EveAllianceInfo
+from allianceauth.eveonline.models import (
+    EveCharacter,
+    EveCorporationInfo,
+    EveAllianceInfo,
+)
 
 from eveuniverse.models.universe_1 import EveType
 from eveuniverse.models.universe_2 import EveSolarSystem
@@ -25,6 +30,7 @@ from app_utils.datetime import ldap_timedelta_2_timedelta
 from structures.models import Notification as StructuresNotification
 from structures.models import Structure as StructuresStructure
 from structuretimers.models import Timer as StructureTimersTimer
+from structuretimers.models import DiscordWebhook as StructureTimersDiscordWebhook
 
 from .app_settings import HR_FORUM_WEBHOOK, JABBERBOT_URL
 from .models import Settings
@@ -118,7 +124,8 @@ def structures_notification_unanchoring():
     last_id_id = int(last_id.value)
 
     for notification in StructuresNotification.objects.filter(
-        id__gt=last_id_id, notif_type='StructureUnanchoring'):
+        id__gt=last_id_id, notif_type="StructureUnanchoring"
+    ):
 
         parsed_text = notification.parsed_text()
 
@@ -138,39 +145,39 @@ def structures_notification_unanchoring():
         if "ownerCorpLinkData" in parsed_text:
             owner_corp_link_data = parsed_text["ownerCorpLinkData"][2]
 
-        structure = StructuresStructure.objects.filter(
-            id=structure_id
-        ).first()
+        structure = StructuresStructure.objects.filter(id=structure_id).first()
 
         structure_name = structure.name if structure else "Unknown Structure"
 
         corp = EveCorporationInfo.objects.filter(
-            corporation_id=owner_corp_link_data).first()
+            corporation_id=owner_corp_link_data
+        ).first()
 
         alliance = None
         if corp.alliance_id is not None:
-            alliance = EveAllianceInfo.objects.filter(
-                id=corp.alliance_id).first()
-        
+            alliance = EveAllianceInfo.objects.filter(id=corp.alliance_id).first()
 
         eve_time = notification.timestamp + ldap_timedelta_2_timedelta(time_left)
 
         timer = StructureTimersTimer.objects.filter(
-            eve_solar_system_id=solar_system_id, structure_name=structure_name, timer_type="UA").first()
+            eve_solar_system_id=solar_system_id,
+            structure_name=structure_name,
+            timer_type="UA",
+        ).first()
 
-        solar_system = EveSolarSystem.objects.filter(
-            id=solar_system_id).first()
+        solar_system = EveSolarSystem.objects.filter(id=solar_system_id).first()
 
-        structure_type = EveType.objects.filter(
-            id=structure_type_id).first()
-        
+        structure_type = EveType.objects.filter(id=structure_type_id).first()
+
         if timer:
             timer.date = eve_time
             timer.owner_name = owner_corp_name
             timer.details_notes = f"Updated from Structures Notification for {owner_corp_name} at {datetime.datetime.now(datetime.timezone.utc).isoformat()}"
             timer.eve_alliance = alliance
             timer.eve_corporation = corp
-            timer.last_updated_at = str(datetime.datetime.now(datetime.timezone.utc).isoformat())
+            timer.last_updated_at = str(
+                datetime.datetime.now(datetime.timezone.utc).isoformat()
+            )
             timer.save()
         else:
             timer = StructureTimersTimer.objects.create(
@@ -188,7 +195,9 @@ def structures_notification_unanchoring():
                 eve_corporation=corp,
                 eve_solar_system=solar_system,
                 structure_type=structure_type,
-                last_updated_at=str(datetime.datetime.now(datetime.timezone.utc).isoformat()),
+                last_updated_at=str(
+                    datetime.datetime.now(datetime.timezone.utc).isoformat()
+                ),
             )
             timer.save()
 
@@ -196,3 +205,86 @@ def structures_notification_unanchoring():
 
     last_id.value = last_id_id
     last_id.save()
+
+
+@shared_task
+def alert_upcoming_unanchoring():
+    timers = (
+        StructureTimersTimer.objects.filter(
+            timer_type="UA", date__gt=datetime.datetime.now(datetime.timezone.utc)
+        )
+        .order_by("date")
+        .all()[:100]
+    )
+
+    if not timers:
+        return
+
+    webhook = StructureTimersDiscordWebhook.objects.filter(is_enabled=True).first()
+
+    embeds = []
+
+    if len(timers) <= 10:
+        unanchoring_table = []
+        structures_names = ""
+        unanchoring_dates = ""
+        time_until_unanchoring = ""
+        for timer in timers:
+            structures_names += (
+                f"{timer.structure_name} ({timer.eve_solar_system.name})\n"
+            )
+            unanchoring_dates += f"<t:{timer.date.strftime('%s')}:f>\n"
+            time_until_unanchoring += f"<t:{timer.date.strftime('%s')}:R>\n"
+        unanchoring_table.append(
+            dhooks_lite.Field("Structure", structures_names, inline=True)
+        )
+        unanchoring_table.append(
+            dhooks_lite.Field("Unanchoring Date", unanchoring_dates, inline=True)
+        )
+        unanchoring_table.append(
+            dhooks_lite.Field(
+                "Time Until Unanchoring", time_until_unanchoring, inline=True
+            )
+        )
+
+        e1 = dhooks_lite.Embed(
+            fields=unanchoring_table,
+        )
+
+        embeds.append(e1)
+    else:
+        for i in range(0, len(timers), 10):
+            unanchoring_table = []
+            structures_names = ""
+            unanchoring_dates = ""
+            time_until_unanchoring = ""
+            for timer in timers[i : i + 10]:
+                structures_names += (
+                    f"{timer.structure_name} ({timer.eve_solar_system.name})\n"
+                )
+                unanchoring_dates += f"<t:{timer.date.strftime('%s')}:f>\n"
+                time_until_unanchoring += f"<t:{timer.date.strftime('%s')}:R>\n"
+            unanchoring_table.append(
+                dhooks_lite.Field("Structure", structures_names, inline=True)
+            )
+            unanchoring_table.append(
+                dhooks_lite.Field("Unanchoring Date", unanchoring_dates, inline=True)
+            )
+            unanchoring_table.append(
+                dhooks_lite.Field(
+                    "Time Until Unanchoring", time_until_unanchoring, inline=True
+                )
+            )
+
+            e1 = dhooks_lite.Embed(
+                fields=unanchoring_table,
+            )
+            embeds.append(e1)
+
+    hook = dhooks_lite.Webhook(webhook.url)
+
+    hook.execute(
+        "Upcoming Unanchoring Timers",
+        username="Structure Timers",
+        embeds=embeds,
+    )
