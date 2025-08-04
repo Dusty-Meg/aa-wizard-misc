@@ -212,7 +212,7 @@ def alert_upcoming_unanchoring():
     timers = (
         StructureTimersTimer.objects.filter(
             timer_type="UA", date__gt=datetime.datetime.now(datetime.timezone.utc)
-        )
+        ).exclude(owner_name="Echelon Research")
         .order_by("date")
         .all()[:100]
     )
