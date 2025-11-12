@@ -66,9 +66,10 @@ def blacklist_check():
     for character in EveCharacter.objects.filter(id__gt=last_id_id):
         try:
             logger.debug(f"Checking character: {character.character_name}")
-            requests.get(f"{JABBERBOT_URL}/blacklist/{character.character_name}/")
+            requests.get(f"{JABBERBOT_URL}/blacklist/{character.character_name}/", timeout=180)
             last_id_id = character.id
         except Exception as error:
+            break
             if "Connection aborted" in str(error):
                 last_id_id = character.id
             else:
