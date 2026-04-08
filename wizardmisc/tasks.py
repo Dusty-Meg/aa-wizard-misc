@@ -1,14 +1,18 @@
 """App Tasks"""
 
 # Standard Library
+import datetime
 import json
 import logging
-import datetime
 
 # Third Party
+import dhooks_lite
 import requests
 from celery import shared_task
-import dhooks_lite
+from structures.models import Notification as StructuresNotification
+from structures.models import Structure as StructuresStructure
+from structuretimers.models import DiscordWebhook as StructureTimersDiscordWebhook
+from structuretimers.models import Timer as StructureTimersTimer
 
 # Django
 from django.conf import settings
@@ -16,21 +20,15 @@ from django.conf import settings
 # Alliance Auth
 from allianceauth.authentication.models import UserProfile
 from allianceauth.eveonline.models import (
+    EveAllianceInfo,
     EveCharacter,
     EveCorporationInfo,
-    EveAllianceInfo,
 )
 
+# Alliance Auth (External Libs)
+from app_utils.datetime import ldap_timedelta_2_timedelta
 from eveuniverse.models.universe_1 import EveType
 from eveuniverse.models.universe_2 import EveSolarSystem
-
-from app_utils.datetime import ldap_timedelta_2_timedelta
-
-
-from structures.models import Notification as StructuresNotification
-from structures.models import Structure as StructuresStructure
-from structuretimers.models import Timer as StructureTimersTimer
-from structuretimers.models import DiscordWebhook as StructureTimersDiscordWebhook
 
 from .app_settings import HR_FORUM_WEBHOOK, JABBERBOT_URL
 from .models import Settings
@@ -66,7 +64,9 @@ def blacklist_check():
     for character in EveCharacter.objects.filter(id__gt=last_id_id):
         try:
             logger.debug(f"Checking character: {character.character_name}")
-            requests.get(f"{JABBERBOT_URL}/blacklist/{character.character_name}/", timeout=180)
+            requests.get(
+                f"{JABBERBOT_URL}/blacklist/{character.character_name}/", timeout=180
+            )
             last_id_id = character.id
         except Exception as error:
             if "Connection aborted" in str(error):
@@ -212,7 +212,8 @@ def alert_upcoming_unanchoring():
     timers = (
         StructureTimersTimer.objects.filter(
             timer_type="UA", date__gt=datetime.datetime.now(datetime.timezone.utc)
-        ).exclude(owner_name="Echelon Research")
+        )
+        .exclude(owner_name="Echelon Research")
         .order_by("date")
         .all()[:100]
     )

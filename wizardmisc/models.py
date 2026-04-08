@@ -18,7 +18,9 @@ class DustyBotCommands(models.Model):
 
 
 class DustyBotTimers(models.Model):
-    TimerId = models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")
+    TimerId = models.AutoField(
+        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+    )
     SystemName = models.TextField()
     BeltType = models.TextField()
     RespawnTime = models.DateTimeField(blank=False, default=None, null=False)
