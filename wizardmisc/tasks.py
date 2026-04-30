@@ -27,8 +27,7 @@ from allianceauth.eveonline.models import (
 
 # Alliance Auth (External Libs)
 from app_utils.datetime import ldap_timedelta_2_timedelta
-from eveuniverse.models.universe_1 import EveType
-from eveuniverse.models.universe_2 import EveSolarSystem
+from eve_sde.models import ItemType, SolarSystem
 
 from .app_settings import HR_FORUM_WEBHOOK, JABBERBOT_URL
 from .models import Settings
@@ -165,9 +164,9 @@ def structures_notification_unanchoring():
             timer_type="UA",
         ).first()
 
-        solar_system = EveSolarSystem.objects.filter(id=solar_system_id).first()
+        solar_system = SolarSystem.objects.filter(id=solar_system_id).first()
 
-        structure_type = EveType.objects.filter(id=structure_type_id).first()
+        structure_type = ItemType.objects.filter(id=structure_type_id).first()
 
         if timer:
             timer.date = eve_time
