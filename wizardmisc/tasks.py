@@ -71,7 +71,7 @@ def blacklist_check():
             if "Connection aborted" in str(error):
                 last_id_id = character.id
             else:
-                logging.error(
+                logger.error(
                     f"Error connecting to Jabber! {error} : {type(error).__name__} : {get_full_class_name(error)}"
                 )
 
@@ -105,7 +105,7 @@ def new_account_discord_ping():
 
             last_id_id = aa_user.id
         except Exception as error:
-            logging.error(f"Error connecting to discord! {error}")
+            logger.error(f"Error connecting to discord! {error}")
 
     last_id.value = last_id_id
 
